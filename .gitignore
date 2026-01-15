@@ -1,0 +1,28 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# Flask stuff
+# instance/
+.webassets-cache
+# app.db
+# *.db
+
+# Environment variables
+.env
+.flaskenv
+
+# MacOS
+.DS_Store
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo 

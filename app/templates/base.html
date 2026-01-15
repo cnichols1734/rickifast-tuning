@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Aqua Force CRM{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#4e73df', // Brand Primary
+                            600: '#4e73df',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        :root {
+            --primary: #4e73df;
+            --secondary: #858796;
+            --success: #1cc88a;
+            --info: #36b9cc;
+            --warning: #f6c23e;
+            --danger: #e74a3b;
+            --light: #f8f9fc;
+            --dark: #5a5c69;
+        }
+
+        body {
+            background-color: #f8f9fc;
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(180deg, #4e73df 10%, #224abe 100%);
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        }
+
+        .sidebar-brand {
+            height: 4.375rem;
+            padding: 1.5rem 1rem;
+            color: white;
+            font-weight: 700;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+
+        .sidebar-menu {
+            padding-top: 1rem;
+        }
+
+        .sidebar-item {
+            padding: 0.75rem 1rem;
+            color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .sidebar-item:hover,
+        .sidebar-item.active {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-item i {
+            margin-right: 0.75rem;
+            width: 1.25rem;
+        }
+
+        .navbar-top {
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            background-color: white;
+            padding: 0.75rem 1rem;
+        }
+
+        .content-wrapper {
+            margin-left: 14rem;
+            padding: 1.5rem;
+        }
+
+        .card {
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            border: none;
+            border-radius: 0.35rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            background-color: #f8f9fc;
+            border-bottom: 1px solid #e3e6f0;
+            padding: 0.75rem 1.25rem;
+        }
+
+        .border-left-primary {
+            border-left: 0.25rem solid var(--primary) !important;
+        }
+
+        .border-left-success {
+            border-left: 0.25rem solid var(--success) !important;
+        }
+
+        .border-left-info {
+            border-left: 0.25rem solid var(--info) !important;
+        }
+
+        .border-left-warning {
+            border-left: 0.25rem solid var(--warning) !important;
+        }
+
+        .border-left-danger {
+            border-left: 0.25rem solid var(--danger) !important;
+        }
+
+        .text-primary {
+            color: var(--primary) !important;
+        }
+
+        .text-success {
+            color: var(--success) !important;
+        }
+
+        .text-info {
+            color: var(--info) !important;
+        }
+
+        .bg-primary {
+            background-color: var(--primary) !important;
+        }
+
+        .bg-success {
+            background-color: var(--success) !important;
+        }
+
+        .bg-info {
+            background-color: var(--info) !important;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            border-color: var(--success);
+        }
+
+        .btn-info {
+            background-color: var(--info);
+            border-color: var(--info);
+        }
+
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: relative;
+                min-height: auto;
+            }
+
+            .content-wrapper {
+                margin-left: 0;
+            }
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+    <div class="d-flex">
+        {% if current_user.is_authenticated %}
+        <!-- Sidebar -->
+        <div class="sidebar position-fixed" style="width: 14rem;">
+            <div class="sidebar-brand">
+                <span>Aqua Force CRM</span>
+            </div>
+            <div class="sidebar-menu">
+                <a href="{{ url_for('main.dashboard') }}"
+                    class="sidebar-item {% if request.endpoint == 'main.dashboard' %}active{% endif %}">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('clients.index') }}"
+                    class="sidebar-item {% if request.endpoint.startswith('clients.') %}active{% endif %}">
+                    <i class="fas fa-users"></i>
+                    <span>Clients</span>
+                </a>
+                <a href="{{ url_for('quotes.index') }}"
+                    class="sidebar-item {% if request.endpoint.startswith('quotes.') %}active{% endif %}">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Quotes</span>
+                </a>
+                <a href="{{ url_for('invoices.index') }}"
+                    class="sidebar-item {% if request.endpoint.startswith('invoices.') %}active{% endif %}">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>Invoices</span>
+                </a>
+                <a href="{{ url_for('auth.logout') }}" class="sidebar-item mt-4">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Main Content -->
+        <div class="w-100 {% if current_user.is_authenticated %}content-wrapper{% endif %}">
+            <!-- Top Navbar -->
+            <nav class="navbar-top d-flex justify-content-between mb-4">
+                <div class="d-flex align-items-center">
+                    <h4 class="mb-0 text-gray-800">{% block header %}Aqua Force CRM{% endblock %}</h4>
+                </div>
+                <div class="d-flex align-items-center">
+                    {% if current_user.is_authenticated %}
+                    <span class="me-2">{{ current_user.username }}</span>
+                    <span class="badge bg-primary">Admin</span>
+                    {% endif %}
+                </div>
+            </nav>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert {% if category == 'error' %}alert-danger{% else %}alert-success{% endif %} alert-dismissible fade show"
+                role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <!-- Main Content -->
+            <div class="container-fluid">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Custom scripts -->
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

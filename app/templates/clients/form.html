@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">{{ title }}</h1>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-8 col-lg-10 col-md-12 mx-auto">
+            <div class="card shadow mb-4 border-left-primary">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Client Information</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Name & Email -->
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <div class="form-group">
+                                    <i class="fas fa-user text-primary mr-1"></i>
+                                    {{ form.name.label(class="form-label font-weight-bold") }}
+                                    {{ form.name(class="form-control", placeholder="Enter client name") }}
+                                    {% for error in form.name.errors %}
+                                    <span class="text-danger">{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <div class="form-group">
+                                    <i class="fas fa-envelope text-primary mr-1"></i>
+                                    {{ form.email.label(class="form-label font-weight-bold") }}
+                                    {{ form.email(class="form-control", placeholder="Enter email address") }}
+                                    {% for error in form.email.errors %}
+                                    <span class="text-danger">{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Phone & Address -->
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <div class="form-group">
+                                    <i class="fas fa-phone text-primary mr-1"></i>
+                                    {{ form.phone.label(class="form-label font-weight-bold") }}
+                                    {{ form.phone(class="form-control phone-mask", placeholder="(xxx) xxx-xxxx") }}
+                                    {% for error in form.phone.errors %}
+                                    <span class="text-danger">{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <div class="form-group">
+                                    <i class="fas fa-map-marker-alt text-primary mr-1"></i>
+                                    {{ form.address.label(class="form-label font-weight-bold") }}
+                                    {{ form.address(class="form-control", placeholder="Street address") }}
+                                    {% for error in form.address.errors %}
+                                    <span class="text-danger">{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- City, State, Zip -->
+                        <div class="row">
+                            <div class="col-md-4 mb-4">
+                                <div class="form-group">
+                                    <i class="fas fa-city text-primary mr-1"></i>
+                                    {{ form.city.label(class="form-label font-weight-bold") }}
+                                    {{ form.city(class="form-control", placeholder="City") }}
+                                    {% for error in form.city.errors %}
+                                    <span class="text-danger">{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="form-group">
+                                    <i class="fas fa-map text-primary mr-1"></i>
+                                    {{ form.state.label(class="form-label font-weight-bold") }}
+                                    {{ form.state(class="form-control", placeholder="State") }}
+                                    {% for error in form.state.errors %}
+                                    <span class="text-danger">{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="form-group">
+                                    <i class="fas fa-mail-bulk text-primary mr-1"></i>
+                                    {{ form.postal_code.label(class="form-label font-weight-bold") }}
+                                    {{ form.postal_code(class="form-control", placeholder="Postal code") }}
+                                    {% for error in form.postal_code.errors %}
+                                    <span class="text-danger">{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Notes -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <i class="fas fa-sticky-note text-primary mr-1"></i>
+                                    {{ form.notes.label(class="form-label font-weight-bold") }}
+                                    {{ form.notes(class="form-control", rows=4, placeholder="Additional notes about the client") }}
+                                    {% for error in form.notes.errors %}
+                                    <span class="text-danger">{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Buttons -->
+                        <div class="row">
+                            <div class="col-12 text-center">
+                                {{ form.submit(class="btn btn-primary btn-lg px-5") }}
+                                <a href="{{ url_for('clients.index') }}" class="btn btn-secondary btn-lg px-5 ml-2">Cancel</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function(){
+        // Phone number mask using jQuery Mask or similar plugin
+        $('.phone-mask').on('input', function() {
+            var phone = $(this).val().replace(/\D/g, '');
+            var formatted = '';
+            
+            if (phone.length > 0) {
+                formatted += '(';
+                formatted += phone.substring(0, 3);
+                if (phone.length > 3) {
+                    formatted += ') ';
+                    formatted += phone.substring(3, 6);
+                    if (phone.length > 6) {
+                        formatted += '-';
+                        formatted += phone.substring(6, 10);
+                    }
+                }
+            }
+            
+            $(this).val(formatted);
+        });
+    });
+</script>
+{% endblock %} 

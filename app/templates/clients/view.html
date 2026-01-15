@@ -1,0 +1,300 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ client.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">{{ client.name }}</h1>
+        <div>
+            <a href="{{ url_for('clients.edit', id=client.id) }}" class="btn btn-warning shadow-sm">
+                <i class="fas fa-edit fa-sm text-white-50"></i> Edit Client
+            </a>
+            <a href="{{ url_for('quotes.create', client_id=client.id) }}" class="btn btn-primary shadow-sm">
+                <i class="fas fa-plus fa-sm text-white-50"></i> New Quote
+            </a>
+            <a href="{{ url_for('invoices.create', client_id=client.id) }}" class="btn btn-success shadow-sm">
+                <i class="fas fa-plus fa-sm text-white-50"></i> New Invoice
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Client Info Card -->
+        <div class="col-xl-4 col-lg-5 col-md-6 mb-4">
+            <div class="card shadow mb-4 border-left-primary">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Contact Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="client-detail mb-3">
+                        <div class="client-icon mb-2">
+                            <i class="fas fa-envelope fa-fw text-primary"></i>
+                            <strong class="ml-2">Email:</strong>
+                        </div>
+                        <div class="ml-4">
+                            <a href="mailto:{{ client.email }}" class="text-gray-800">{{ client.email }}</a>
+                        </div>
+                    </div>
+                    
+                    {% if client.phone %}
+                    <div class="client-detail mb-3">
+                        <div class="client-icon mb-2">
+                            <i class="fas fa-phone fa-fw text-primary"></i>
+                            <strong class="ml-2">Phone:</strong>
+                        </div>
+                        <div class="ml-4">
+                            <a href="tel:{{ client.phone }}" class="text-gray-800">{{ client.phone }}</a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if client.address or client.city or client.state or client.postal_code %}
+                    <div class="client-detail mb-3">
+                        <div class="client-icon mb-2">
+                            <i class="fas fa-map-marker-alt fa-fw text-primary"></i>
+                            <strong class="ml-2">Address:</strong>
+                        </div>
+                        <div class="ml-4">
+                            {% if client.address %}{{ client.address }}<br>{% endif %}
+                            {% if client.city or client.state or client.postal_code %}
+                                {% if client.city %}{{ client.city }}{% endif %}
+                                {% if client.city and client.state %}, {% endif %}
+                                {% if client.state %}{{ client.state }}{% endif %}
+                                {% if client.postal_code %} {{ client.postal_code }}{% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if client.notes %}
+                    <div class="client-detail mb-3">
+                        <div class="client-icon mb-2">
+                            <i class="fas fa-sticky-note fa-fw text-primary"></i>
+                            <strong class="ml-2">Notes:</strong>
+                        </div>
+                        <div class="ml-4">
+                            {{ client.notes }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="client-detail">
+                        <div class="client-icon mb-2">
+                            <i class="fas fa-calendar-alt fa-fw text-primary"></i>
+                            <strong class="ml-2">Client Since:</strong>
+                        </div>
+                        <div class="ml-4">
+                            {{ client.created_at.strftime('%B %d, %Y') }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Client Stats Card -->
+            <div class="card shadow mb-4 border-left-info">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-info">Client Summary</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center mb-3">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Total Quotes
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ quotes|length }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-file-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="row no-gutters align-items-center mb-3">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Total Invoices
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ invoices|length }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-file-invoice-dollar fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Total Revenue
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                ${{ "%.2f"|format(invoices|sum(attribute='total')) if invoices else "0.00" }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quotes and Invoices -->
+        <div class="col-xl-8 col-lg-7 col-md-6">
+            <div class="row">
+                <!-- Quotes Column -->
+                <div class="col-12 mb-4">
+                    <div class="card shadow mb-4 border-left-primary">
+                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                            <h6 class="m-0 font-weight-bold text-primary">Quotes</h6>
+                            <a href="{{ url_for('quotes.create', client_id=client.id) }}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-plus"></i> New Quote
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            {% if quotes %}
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Date</th>
+                                            <th>Expiration</th>
+                                            <th>Total</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for quote in quotes %}
+                                        <tr>
+                                            <td>{{ quote.id }}</td>
+                                            <td>{{ quote.date.strftime('%m/%d/%Y') }}</td>
+                                            <td>
+                                                {% if quote.expiration_date %}
+                                                    {{ quote.expiration_date.strftime('%m/%d/%Y') }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                            <td>${{ "%.2f"|format(quote.total) }}</td>
+                                            <td>
+                                                <span class="badge badge-{{ 'success' if quote.status == 'approved' else ('warning' if quote.status == 'pending' else 'danger') }} badge-pill">
+                                                    {{ quote.status|title }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <a href="{{ url_for('quotes.view', id=quote.id) }}" class="btn btn-info btn-sm">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="{{ url_for('quotes.edit', id=quote.id) }}" class="btn btn-warning btn-sm">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4">
+                                <p class="mb-0">No quotes created yet.</p>
+                                <a href="{{ url_for('quotes.create', client_id=client.id) }}" class="btn btn-primary btn-sm mt-3">
+                                    <i class="fas fa-plus mr-1"></i> Create First Quote
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Invoices Column -->
+                <div class="col-12 mb-4">
+                    <div class="card shadow mb-4 border-left-success">
+                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                            <h6 class="m-0 font-weight-bold text-success">Invoices</h6>
+                            <a href="{{ url_for('invoices.create', client_id=client.id) }}" class="btn btn-sm btn-success">
+                                <i class="fas fa-plus"></i> New Invoice
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            {% if invoices %}
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Date</th>
+                                            <th>Due Date</th>
+                                            <th>Total</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for invoice in invoices %}
+                                        <tr class="{{ 'table-danger' if (invoice.status == 'unpaid' and invoice.due_date and invoice.due_date < now) }}">
+                                            <td>{{ invoice.id }}</td>
+                                            <td>{{ invoice.date.strftime('%m/%d/%Y') }}</td>
+                                            <td>
+                                                {% if invoice.due_date %}
+                                                    {{ invoice.due_date.strftime('%m/%d/%Y') }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                            <td>${{ "%.2f"|format(invoice.total) }}</td>
+                                            <td>
+                                                <span class="badge badge-{{ 'success' if invoice.status == 'paid' else ('danger' if invoice.status == 'overdue' else 'warning') }} badge-pill">
+                                                    {{ invoice.status|title }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <a href="{{ url_for('invoices.view', id=invoice.id) }}" class="btn btn-info btn-sm">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="{{ url_for('invoices.edit', id=invoice.id) }}" class="btn btn-warning btn-sm">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4">
+                                <p class="mb-0">No invoices created yet.</p>
+                                <a href="{{ url_for('invoices.create', client_id=client.id) }}" class="btn btn-success btn-sm mt-3">
+                                    <i class="fas fa-plus mr-1"></i> Create First Invoice
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('.table').DataTable({
+            "order": [[ 0, "desc" ]],
+            "pageLength": 5,
+            "lengthMenu": [[5, 10, 25, -1], [5, 10, 25, "All"]]
+        });
+    });
+</script>
+{% endblock %} 
