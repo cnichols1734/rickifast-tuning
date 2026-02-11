@@ -1,132 +1,238 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required
+from datetime import date, datetime, timezone
 from app import db
-from app.models.models import Invoice, InvoiceItem, Client, Service
-from app.forms.invoice_forms import InvoiceForm, InvoiceItemForm
-from datetime import datetime, timedelta, timezone
-from app.utils.email_utils import send_invoice_email
-from app.utils import get_or_404
+from app.models import Client, Invoice, InvoiceItem, Payment
 
 invoices = Blueprint('invoices', __name__, url_prefix='/invoices')
+
 
 @invoices.route('/')
 @login_required
 def index():
-    invoices = Invoice.query.order_by(Invoice.date.desc()).all()
-    return render_template('invoices/index.html', invoices=invoices)
+    status_filter = request.args.get('status', 'all')
+    all_invoices = Invoice.query.order_by(Invoice.created_at.desc()).all()
+
+    if status_filter != 'all':
+        all_invoices = [inv for inv in all_invoices if inv.get_status() == status_filter]
+
+    counts = {}
+    every = Invoice.query.all()
+    for s in ['draft', 'sent', 'partial', 'paid', 'overdue']:
+        counts[s] = sum(1 for inv in every if inv.get_status() == s)
+    counts['all'] = len(every)
+
+    return render_template('invoices/index.html', invoices=all_invoices,
+                           status_filter=status_filter, counts=counts)
+
 
 @invoices.route('/create', methods=['GET', 'POST'])
 @login_required
 def create():
-    form = InvoiceForm()
-    form.client_id.choices = [(c.id, c.name) for c in Client.query.order_by(Client.name).all()]
-    
-    if form.validate_on_submit():
+    if request.method == 'POST':
+        client_id = request.form.get('client_id', type=int)
+        if not client_id:
+            flash('Please select a client.', 'error')
+            return redirect(url_for('invoices.create'))
+
+        status = request.form.get('status', 'draft')
+        due_date_str = request.form.get('due_date', '')
+        due_date = None
+        if due_date_str:
+            try:
+                due_date = date.fromisoformat(due_date_str)
+            except ValueError:
+                pass
+
+        tax_rate = request.form.get('tax_rate', 0.0825, type=float)
+        notes = request.form.get('notes', '').strip()
+
         invoice = Invoice(
-            client_id=form.client_id.data,
-            date=datetime.now(timezone.utc),
-            due_date=datetime.now(timezone.utc) + timedelta(days=30),
-            status='unpaid',
-            notes=form.notes.data
+            client_id=client_id,
+            invoice_number=Invoice.generate_number(),
+            status=status,
+            due_date=due_date,
+            tax_rate=tax_rate,
+            notes=notes,
         )
         db.session.add(invoice)
+        db.session.flush()
+
+        descriptions = request.form.getlist('item_description[]')
+        quantities = request.form.getlist('item_quantity[]')
+        prices = request.form.getlist('item_price[]')
+        taxables = request.form.getlist('item_taxable[]')
+
+        for i, desc in enumerate(descriptions):
+            if not desc.strip():
+                continue
+            try:
+                qty = float(quantities[i]) if i < len(quantities) else 1
+                price = float(prices[i]) if i < len(prices) else 0
+            except (ValueError, IndexError):
+                continue
+
+            taxable = str(i) in taxables
+
+            item = InvoiceItem(
+                invoice_id=invoice.id,
+                description=desc.strip(),
+                quantity=qty,
+                unit_price=price,
+                taxable=taxable,
+            )
+            db.session.add(item)
+
         db.session.commit()
-        flash('Invoice created successfully!')
-        return redirect(url_for('invoices.edit', id=invoice.id))
-    
-    return render_template('invoices/form.html', form=form, title='Create New Invoice')
+        flash('Invoice created.', 'success')
+        return redirect(url_for('invoices.view', id=invoice.id))
+
+    clients = Client.query.order_by(Client.last_name).all()
+    next_number = Invoice.generate_number()
+    return render_template('invoices/form.html', invoice=None, clients=clients,
+                           next_number=next_number, editing=False)
+
 
 @invoices.route('/<int:id>')
 @login_required
 def view(id):
-    invoice = get_or_404(Invoice, id)
-    return render_template('invoices/view.html', invoice=invoice)
+    invoice = db.get_or_404(Invoice, id)
+    return render_template('invoices/view.html', invoice=invoice, today=date.today().isoformat())
+
 
 @invoices.route('/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit(id):
-    invoice = Invoice.query.get_or_404(id)
-    services = Service.query.all()
-    
-    form = InvoiceForm(obj=invoice)
-    form.client_id.choices = [(c.id, c.name) for c in Client.query.order_by(Client.name).all()]
-    item_form = InvoiceItemForm()
-    
-    if form.validate_on_submit():
-        form.populate_obj(invoice)
+    invoice = db.get_or_404(Invoice, id)
+
+    if request.method == 'POST':
+        invoice.client_id = request.form.get('client_id', type=int)
+        invoice.status = request.form.get('status', 'draft')
+        invoice.tax_rate = request.form.get('tax_rate', 0.0825, type=float)
+        invoice.notes = request.form.get('notes', '').strip()
+
+        due_date_str = request.form.get('due_date', '')
+        invoice.due_date = date.fromisoformat(due_date_str) if due_date_str else None
+
+        # Clear existing items and rebuild
+        InvoiceItem.query.filter_by(invoice_id=invoice.id).delete()
+
+        descriptions = request.form.getlist('item_description[]')
+        quantities = request.form.getlist('item_quantity[]')
+        prices = request.form.getlist('item_price[]')
+        taxables = request.form.getlist('item_taxable[]')
+
+        for i, desc in enumerate(descriptions):
+            if not desc.strip():
+                continue
+            try:
+                qty = float(quantities[i]) if i < len(quantities) else 1
+                price = float(prices[i]) if i < len(prices) else 0
+            except (ValueError, IndexError):
+                continue
+
+            taxable = str(i) in taxables
+
+            item = InvoiceItem(
+                invoice_id=invoice.id,
+                description=desc.strip(),
+                quantity=qty,
+                unit_price=price,
+                taxable=taxable,
+            )
+            db.session.add(item)
+
         db.session.commit()
-        flash('Invoice updated successfully!')
+        flash('Invoice updated.', 'success')
         return redirect(url_for('invoices.view', id=invoice.id))
-    
-    return render_template('invoices/edit.html', 
-                          invoice=invoice, 
-                          form=form,
-                          item_form=item_form,
-                          services=services)
 
-@invoices.route('/<int:id>/add_item', methods=['POST'])
+    clients = Client.query.order_by(Client.last_name).all()
+    return render_template('invoices/form.html', invoice=invoice, clients=clients,
+                           next_number=invoice.invoice_number, editing=True)
+
+
+@invoices.route('/<int:id>/print')
 @login_required
-def add_item(id):
-    invoice = Invoice.query.get_or_404(id)
-    form = InvoiceItemForm()
-    
-    if form.validate_on_submit():
-        item = InvoiceItem(
-            invoice_id=invoice.id,
-            service_name=form.service_name.data,
-            description=form.description.data,
-            quantity=form.quantity.data,
-            price=form.price.data
+def print_view(id):
+    invoice = db.get_or_404(Invoice, id)
+    return render_template('invoices/print.html', invoice=invoice)
+
+
+@invoices.route('/<int:id>/duplicate', methods=['POST'])
+@login_required
+def duplicate(id):
+    original = db.get_or_404(Invoice, id)
+
+    new_invoice = Invoice(
+        client_id=original.client_id,
+        invoice_number=Invoice.generate_number(),
+        status='draft',
+        due_date=None,
+        tax_rate=original.tax_rate,
+        notes=original.notes,
+    )
+    db.session.add(new_invoice)
+    db.session.flush()
+
+    for item in original.items:
+        new_item = InvoiceItem(
+            invoice_id=new_invoice.id,
+            description=item.description,
+            quantity=item.quantity,
+            unit_price=item.unit_price,
+            taxable=item.taxable,
         )
-        db.session.add(item)
-        
-        # Update invoice total
-        invoice.total += (item.price * item.quantity)
-        db.session.commit()
-        
-        flash('Item added to invoice')
-        
-    return redirect(url_for('invoices.edit', id=invoice.id))
+        db.session.add(new_item)
 
-@invoices.route('/<int:id>/remove_item/<int:item_id>', methods=['POST'])
-@login_required
-def remove_item(id, item_id):
-    invoice = Invoice.query.get_or_404(id)
-    item = InvoiceItem.query.get_or_404(item_id)
-    
-    # Ensure item belongs to this invoice
-    if item.invoice_id != invoice.id:
-        flash('Error: Item does not belong to this invoice')
-        return redirect(url_for('invoices.edit', id=id))
-    
-    # Update invoice total
-    invoice.total -= (item.price * item.quantity)
-    
-    # Remove the item
-    db.session.delete(item)
     db.session.commit()
-    
-    flash('Item removed from invoice')
-    return redirect(url_for('invoices.edit', id=id))
+    flash(f'Invoice duplicated as {new_invoice.invoice_number}.', 'success')
+    return redirect(url_for('invoices.view', id=new_invoice.id))
 
-@invoices.route('/<int:id>/mark_paid', methods=['POST'])
+
+@invoices.route('/<int:id>/delete', methods=['POST'])
 @login_required
-def mark_paid(id):
-    invoice = Invoice.query.get_or_404(id)
-    invoice.status = 'paid'
+def delete(id):
+    invoice = db.get_or_404(Invoice, id)
+    db.session.delete(invoice)
     db.session.commit()
-    flash('Invoice marked as paid')
-    return redirect(url_for('invoices.view', id=id))
+    flash('Invoice deleted.', 'success')
+    return redirect(url_for('invoices.index'))
 
-@invoices.route('/<int:id>/send_email', methods=['POST'])
+
+@invoices.route('/<int:id>/payments', methods=['POST'])
 @login_required
-def send_email(id):
-    invoice = Invoice.query.get_or_404(id)
-    
-    try:
-        send_invoice_email(invoice)
-        flash('Invoice email sent successfully!')
-    except Exception as e:
-        flash(f'Error sending email: {str(e)}', 'error')
-    
-    return redirect(url_for('invoices.view', id=id)) 
+def record_payment(id):
+    invoice = db.get_or_404(Invoice, id)
+
+    amount = request.form.get('amount', type=float)
+    if not amount or amount <= 0:
+        flash('Please enter a valid payment amount.', 'error')
+        return redirect(url_for('invoices.view', id=invoice.id))
+
+    method = request.form.get('method', 'cash')
+    reference_note = request.form.get('reference_note', '').strip()
+    payment_date_str = request.form.get('payment_date', '')
+
+    payment_dt = date.today()
+    if payment_date_str:
+        try:
+            payment_dt = date.fromisoformat(payment_date_str)
+        except ValueError:
+            pass
+
+    payment = Payment(
+        invoice_id=invoice.id,
+        amount=amount,
+        payment_date=payment_dt,
+        method=method,
+        reference_note=reference_note,
+    )
+    db.session.add(payment)
+
+    # Auto-set status to sent if still draft
+    if invoice.status == 'draft':
+        invoice.status = 'sent'
+
+    db.session.commit()
+    flash(f'Payment of ${amount:,.2f} recorded.', 'success')
+    return redirect(url_for('invoices.view', id=invoice.id))

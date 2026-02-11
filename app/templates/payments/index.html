@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Payments — AutoCRM{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-semibold text-gray-900">Payments</h1>
+</div>
+
+<!-- Filter -->
+<div class="flex flex-wrap gap-1 mb-4">
+    {% for key, label in [('all','All'), ('cash','Cash'), ('check','Check'), ('zelle','Zelle'), ('venmo','Venmo'), ('card','Card'), ('other','Other')] %}
+    <a href="{{ url_for('payments.index', method=key) }}"
+       class="px-3 py-1.5 text-sm font-medium rounded-md {% if method_filter == key %}bg-gray-900 text-white{% else %}text-gray-600 hover:bg-gray-100{% endif %}">
+        {{ label }}
+    </a>
+    {% endfor %}
+</div>
+
+<div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th class="px-5 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                    <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
+                    <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice</th>
+                    <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Client</th>
+                    <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Reference</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-100">
+                {% for p in payments %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-5 py-3 text-sm text-gray-700">{{ p.payment_date.strftime('%b %d, %Y') if p.payment_date else '' }}</td>
+                    <td class="px-5 py-3 text-sm text-right font-medium">${{ '{:,.2f}'.format(p.amount) }}</td>
+                    <td class="px-5 py-3 text-sm text-gray-600">{{ p.method }}</td>
+                    <td class="px-5 py-3 text-sm">
+                        <a href="{{ url_for('invoices.view', id=p.invoice_id) }}" class="text-blue-600 hover:text-blue-700">{{ p.invoice.invoice_number }}</a>
+                    </td>
+                    <td class="px-5 py-3 text-sm text-gray-600 hidden sm:table-cell">{{ p.invoice.client.full_name }}</td>
+                    <td class="px-5 py-3 text-sm text-gray-400 hidden md:table-cell">{{ p.reference_note or '' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="px-5 py-8 text-center text-sm text-gray-400">No payments found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

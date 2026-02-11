@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ invoice.invoice_number }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; color: #111; font-size: 14px; padding: 40px; max-width: 800px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
+        .header h1 { font-size: 24px; font-weight: 600; }
+        .header .meta { text-align: right; color: #666; font-size: 13px; }
+        .client-info { margin-bottom: 32px; color: #444; font-size: 13px; }
+        .client-info strong { color: #111; display: block; margin-bottom: 4px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+        thead th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #888; padding: 8px 12px; border-bottom: 1px solid #e5e5e5; }
+        thead th.right { text-align: right; }
+        thead th.center { text-align: center; }
+        tbody td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+        tbody td.right { text-align: right; }
+        tbody td.center { text-align: center; }
+        .totals { display: flex; justify-content: flex-end; }
+        .totals-inner { width: 250px; }
+        .totals-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; color: #666; }
+        .totals-row.total { font-size: 16px; font-weight: 600; color: #111; padding-top: 8px; border-top: 1px solid #e5e5e5; margin-top: 4px; }
+        .notes { margin-top: 32px; padding: 16px; background: #f9f9f9; border-radius: 6px; font-size: 13px; color: #555; }
+        .notes strong { display: block; margin-bottom: 4px; color: #111; }
+        @media print {
+            body { padding: 0; }
+            @page { margin: 20mm; }
+        }
+        .print-btn { position: fixed; bottom: 20px; right: 20px; padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 14px; }
+        @media print { .print-btn { display: none; } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>{{ invoice.invoice_number }}</h1>
+            <p style="color: #666; margin-top: 4px;">AutoCRM</p>
+        </div>
+        <div class="meta">
+            <p>Created: {{ invoice.created_at.strftime('%B %d, %Y') }}</p>
+            {% if invoice.due_date %}<p>Due: {{ invoice.due_date.strftime('%B %d, %Y') }}</p>{% endif %}
+        </div>
+    </div>
+
+    <div class="client-info">
+        <strong>{{ invoice.client.full_name }}</strong>
+        {{ invoice.client.vehicle_display }}<br>
+        {% if invoice.client.email %}{{ invoice.client.email }}<br>{% endif %}
+        {% if invoice.client.phone %}{{ invoice.client.phone }}{% endif %}
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th class="right">Qty</th>
+                <th class="right">Price</th>
+                <th class="center">Tax</th>
+                <th class="right">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in invoice.items %}
+            <tr>
+                <td>{{ item.description }}</td>
+                <td class="right">{{ item.quantity }}</td>
+                <td class="right">${{ '{:,.2f}'.format(item.unit_price) }}</td>
+                <td class="center">{{ 'Yes' if item.taxable else '' }}</td>
+                <td class="right">${{ '{:,.2f}'.format(item.amount) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <div class="totals-inner">
+            <div class="totals-row"><span>Subtotal</span><span>${{ '{:,.2f}'.format(invoice.calculate_subtotal()) }}</span></div>
+            <div class="totals-row"><span>Tax ({{ '{:.2f}'.format(invoice.tax_rate * 100) }}%)</span><span>${{ '{:,.2f}'.format(invoice.calculate_tax()) }}</span></div>
+            <div class="totals-row total"><span>Total</span><span>${{ '{:,.2f}'.format(invoice.calculate_total()) }}</span></div>
+            {% if invoice.calculate_paid() > 0 %}
+            <div class="totals-row" style="color: #16a34a;"><span>Paid</span><span>-${{ '{:,.2f}'.format(invoice.calculate_paid()) }}</span></div>
+            <div class="totals-row total"><span>Balance Due</span><span>${{ '{:,.2f}'.format(invoice.calculate_balance()) }}</span></div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if invoice.notes %}
+    <div class="notes">
+        <strong>Notes</strong>
+        {{ invoice.notes }}
+    </div>
+    {% endif %}
+
+    <button class="print-btn" onclick="window.print()">Print</button>
+</body>
+</html>

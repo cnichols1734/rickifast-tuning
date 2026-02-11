@@ -1,246 +1,134 @@
-{% extends 'base.html' %}
-
-{% block title %}{{ title }}{% endblock %}
+{% extends "base.html" %}
+{% block title %}{{ 'Edit Invoice' if editing else 'New Invoice' }} — AutoCRM{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- Page Heading -->
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">{{ title }}</h1>
+<div class="max-w-3xl">
+    <div class="mb-6">
+        <a href="{{ url_for('invoices.index') }}" class="text-sm text-gray-500 hover:text-gray-700">&larr; Back to invoices</a>
+        <h1 class="text-2xl font-semibold text-gray-900 mt-2">{{ 'Edit Invoice' if editing else 'New Invoice' }}</h1>
+        <p class="text-sm text-gray-500">{{ next_number }}</p>
     </div>
 
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card shadow mb-4 border-left-success">
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-success">Invoice Details</h6>
+    <form method="POST"
+          x-data="{
+              taxRate: {{ invoice.tax_rate if invoice else 0.0825 }},
+              items: [
+                  {% if invoice %}
+                  {% for item in invoice.items %}
+                  { description: '{{ item.description|e }}', quantity: {{ item.quantity }}, price: {{ item.unit_price }}, taxable: {{ 'true' if item.taxable else 'false' }} },
+                  {% endfor %}
+                  {% else %}
+                  { description: '', quantity: 1, price: 0, taxable: false },
+                  {% endif %}
+              ],
+              get subtotal() { return this.items.reduce((sum, i) => sum + (i.quantity * i.price), 0) },
+              get taxTotal() { return this.items.filter(i => i.taxable).reduce((sum, i) => sum + (i.quantity * i.price), 0) * this.taxRate },
+              get total() { return this.subtotal + this.taxTotal },
+              addItem() { this.items.push({ description: '', quantity: 1, price: 0, taxable: false }) },
+              removeItem(index) { if (this.items.length > 1) this.items.splice(index, 1) }
+          }">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6 mb-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label for="client_id" class="block text-sm font-medium text-gray-700 mb-1">Client *</label>
+                    <select name="client_id" id="client_id" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">Select a client...</option>
+                        {% for c in clients %}
+                        <option value="{{ c.id }}" {% if (invoice and invoice.client_id == c.id) or (request.args.get('client_id')|int == c.id) %}selected{% endif %}>
+                            {{ c.full_name }} — {{ c.vehicle_display }}
+                        </option>
+                        {% endfor %}
+                    </select>
                 </div>
-                <div class="card-body">
-                    <form method="POST">
-                        {{ form.hidden_tag() }}
-                        
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <div class="form-group">
-                                    {{ form.client_id.label(class="form-label font-weight-bold") }}
-                                    {{ form.client_id(class="form-control selectpicker", data_live_search="true") }}
-                                    {% for error in form.client_id.errors %}
-                                    <span class="text-danger">{{ error }}</span>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <div class="form-group">
-                                    {{ form.due_date.label(class="form-label font-weight-bold") }}
-                                    {{ form.due_date(class="form-control datepicker", type="date") }}
-                                    {% for error in form.due_date.errors %}
-                                    <span class="text-danger">{{ error }}</span>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <div class="form-group">
-                                    {{ form.status.label(class="form-label font-weight-bold") }}
-                                    {{ form.status(class="form-control") }}
-                                    {% for error in form.status.errors %}
-                                    <span class="text-danger">{{ error }}</span>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <div class="form-group">
-                                    {{ form.payment_terms.label(class="form-label font-weight-bold") }}
-                                    {{ form.payment_terms(class="form-control") }}
-                                    {% for error in form.payment_terms.errors %}
-                                    <span class="text-danger">{{ error }}</span>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row mb-3">
-                            <div class="col-12">
-                                <div class="form-group">
-                                    {{ form.notes.label(class="form-label font-weight-bold") }}
-                                    {{ form.notes(class="form-control", rows=3) }}
-                                    {% for error in form.notes.errors %}
-                                    <span class="text-danger">{{ error }}</span>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-12">
-                                {{ form.submit(class="btn btn-success btn-lg") }}
-                                <a href="{{ url_for('invoices.index') }}" class="btn btn-secondary btn-lg">Cancel</a>
-                            </div>
-                        </div>
-                    </form>
+                <div>
+                    <label for="due_date" class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                    <input type="date" name="due_date" id="due_date"
+                           value="{{ invoice.due_date.isoformat() if invoice and invoice.due_date else '' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select name="status" id="status"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="draft" {% if not invoice or invoice.status == 'draft' %}selected{% endif %}>Draft</option>
+                        <option value="sent" {% if invoice and invoice.status == 'sent' %}selected{% endif %}>Sent</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="tax_rate" class="block text-sm font-medium text-gray-700 mb-1">Tax Rate (%)</label>
+                    <input type="number" name="tax_rate" id="tax_rate" step="0.0001" min="0" max="1"
+                           x-model.number="taxRate"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <p class="text-xs text-gray-400 mt-0.5">e.g. 0.0825 = 8.25%</p>
                 </div>
             </div>
         </div>
-    </div>
 
-    {% if invoice %}
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card shadow mb-4 border-left-primary">
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Invoice Items</h6>
-                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addItemModal">
-                        <i class="fas fa-plus"></i> Add Item
-                    </button>
-                </div>
-                <div class="card-body">
-                    {% if invoice.items %}
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover" id="itemsTable" width="100%" cellspacing="0">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th>Service</th>
-                                    <th>Description</th>
-                                    <th class="text-center">Quantity</th>
-                                    <th class="text-right">Price</th>
-                                    <th class="text-right">Total</th>
-                                    <th class="text-center">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for item in invoice.items %}
-                                <tr>
-                                    <td>{{ item.service_name }}</td>
-                                    <td>{{ item.description }}</td>
-                                    <td class="text-center">{{ item.quantity }}</td>
-                                    <td class="text-right">${{ "%.2f"|format(item.price) }}</td>
-                                    <td class="text-right">${{ "%.2f"|format(item.price * item.quantity) }}</td>
-                                    <td class="text-center">
-                                        <form action="{{ url_for('invoices.delete_item', invoice_id=invoice.id, item_id=item.id) }}" method="post" style="display:inline;">
-                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this item?')">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                            <tfoot>
-                                <tr class="table-active">
-                                    <th colspan="4" class="text-right">Total:</th>
-                                    <th class="text-right">${{ "%.2f"|format(invoice.total) }}</th>
-                                    <th></th>
-                                </tr>
-                            </tfoot>
-                        </table>
+        <!-- Line Items -->
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6 mb-4">
+            <h2 class="text-sm font-semibold text-gray-900 mb-4">Line Items</h2>
+
+            <div class="space-y-3">
+                <template x-for="(item, index) in items" :key="index">
+                    <div class="grid grid-cols-12 gap-2 items-start">
+                        <div class="col-span-12 sm:col-span-5">
+                            <input type="text" :name="'item_description[]'" x-model="item.description" placeholder="Description"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div class="col-span-4 sm:col-span-2">
+                            <input type="number" :name="'item_quantity[]'" x-model.number="item.quantity" step="0.01" min="0" placeholder="Qty"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div class="col-span-4 sm:col-span-2">
+                            <input type="number" :name="'item_price[]'" x-model.number="item.price" step="0.01" min="0" placeholder="Price"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div class="col-span-2 sm:col-span-2 flex items-center gap-2 py-2">
+                            <label class="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
+                                <input type="checkbox" :name="'item_taxable[]'" :value="index" x-model="item.taxable"
+                                       class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                Tax
+                            </label>
+                        </div>
+                        <div class="col-span-2 sm:col-span-1 flex items-center justify-end">
+                            <button type="button" @click="removeItem(index)" x-show="items.length > 1"
+                                    class="p-1 text-gray-400 hover:text-red-500">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
-                    <div class="text-right mt-3">
-                        <a href="{{ url_for('invoices.view', id=invoice.id) }}" class="btn btn-info">
-                            <i class="fas fa-eye"></i> Preview Invoice
-                        </a>
-                    </div>
-                    {% else %}
-                    <div class="text-center py-5">
-                        <i class="fas fa-file-invoice-dollar fa-4x text-gray-300 mb-3"></i>
-                        <p class="lead">No items added to this invoice yet.</p>
-                        <button type="button" class="btn btn-primary mt-2" data-toggle="modal" data-target="#addItemModal">
-                            <i class="fas fa-plus mr-1"></i> Add Your First Item
-                        </button>
-                    </div>
-                    {% endif %}
-                </div>
+                </template>
+            </div>
+
+            <button type="button" @click="addItem()" class="mt-3 text-sm text-blue-600 hover:text-blue-700 font-medium">+ Add line item</button>
+
+            <!-- Totals -->
+            <div class="mt-6 pt-4 border-t border-gray-200 space-y-1 text-right">
+                <p class="text-sm text-gray-500">Subtotal: <span class="font-medium text-gray-900" x-text="'$' + subtotal.toFixed(2)"></span></p>
+                <p class="text-sm text-gray-500">Tax: <span class="font-medium text-gray-900" x-text="'$' + taxTotal.toFixed(2)"></span></p>
+                <p class="text-base font-semibold text-gray-900">Total: <span x-text="'$' + total.toFixed(2)"></span></p>
             </div>
         </div>
-    </div>
 
-    <!-- Add Item Modal -->
-    <div class="modal fade" id="addItemModal" tabindex="-1" role="dialog" aria-labelledby="addItemModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="addItemModalLabel">Add Invoice Item</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <form action="{{ url_for('invoices.add_item', id=invoice.id) }}" method="post">
-                    <div class="modal-body">
-                        {{ item_form.hidden_tag() }}
-                        <div class="form-group">
-                            {{ item_form.service_name.label(class="form-label font-weight-bold") }}
-                            {{ item_form.service_name(class="form-control") }}
-                            {% for error in item_form.service_name.errors %}
-                            <span class="text-danger">{{ error }}</span>
-                            {% endfor %}
-                        </div>
-                        <div class="form-group">
-                            {{ item_form.description.label(class="form-label font-weight-bold") }}
-                            {{ item_form.description(class="form-control", rows=2) }}
-                            {% for error in item_form.description.errors %}
-                            <span class="text-danger">{{ error }}</span>
-                            {% endfor %}
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    {{ item_form.quantity.label(class="form-label font-weight-bold") }}
-                                    {{ item_form.quantity(class="form-control", min="0.01", step="0.01") }}
-                                    {% for error in item_form.quantity.errors %}
-                                    <span class="text-danger">{{ error }}</span>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    {{ item_form.price.label(class="form-label font-weight-bold") }}
-                                    <div class="input-group">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text">$</span>
-                                        </div>
-                                        {{ item_form.price(class="form-control", min="0.00", step="0.01") }}
-                                    </div>
-                                    {% for error in item_form.price.errors %}
-                                    <span class="text-danger">{{ error }}</span>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        {{ item_form.submit(class="btn btn-primary") }}
-                    </div>
-                </form>
-            </div>
+        <!-- Notes -->
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6 mb-4">
+            <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <textarea name="notes" id="notes" rows="2"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">{{ invoice.notes if invoice else '' }}</textarea>
         </div>
-    </div>
-    {% endif %}
+
+        <div class="flex justify-end gap-3">
+            <a href="{{ url_for('invoices.index') }}" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">Cancel</a>
+            <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">{{ 'Save Changes' if editing else 'Create Invoice' }}</button>
+        </div>
+    </form>
 </div>
 {% endblock %}
-
-{% block scripts %}
-<script>
-    $(document).ready(function() {
-        // Initialize datepicker if using Bootstrap datepicker
-        $('.datepicker').datepicker({
-            format: 'yyyy-mm-dd',
-            autoclose: true,
-            todayHighlight: true
-        });
-        
-        // Calculate subtotal when quantity or price changes
-        $('#quantity, #price').on('input', function() {
-            calculateSubtotal();
-        });
-        
-        function calculateSubtotal() {
-            var quantity = parseFloat($('#quantity').val()) || 0;
-            var price = parseFloat($('#price').val()) || 0;
-            var subtotal = quantity * price;
-            $('#subtotal').text('$' + subtotal.toFixed(2));
-        }
-    });
-</script>
-{% endblock %} 

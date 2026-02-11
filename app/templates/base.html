@@ -1,272 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Aqua Force CRM{% endblock %}</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Tailwind CSS -->
+    <title>{% block title %}AutoCRM{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: {
-                        primary: {
-                            50: '#f0f9ff',
-                            100: '#e0f2fe',
-                            200: '#bae6fd',
-                            300: '#7dd3fc',
-                            400: '#38bdf8',
-                            500: '#4e73df', // Brand Primary
-                            600: '#4e73df',
-                            700: '#1d4ed8',
-                            800: '#1e40af',
-                            900: '#1e3a8a',
-                        }
-                    }
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
                 }
             }
         }
     </script>
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
-        :root {
-            --primary: #4e73df;
-            --secondary: #858796;
-            --success: #1cc88a;
-            --info: #36b9cc;
-            --warning: #f6c23e;
-            --danger: #e74a3b;
-            --light: #f8f9fc;
-            --dark: #5a5c69;
-        }
-
-        body {
-            background-color: #f8f9fc;
-            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-        }
-
-        .sidebar {
-            min-height: 100vh;
-            background: linear-gradient(180deg, #4e73df 10%, #224abe 100%);
-            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
-        }
-
-        .sidebar-brand {
-            height: 4.375rem;
-            padding: 1.5rem 1rem;
-            color: white;
-            font-weight: 700;
-            text-align: center;
-            font-size: 1.2rem;
-        }
-
-        .sidebar-menu {
-            padding-top: 1rem;
-        }
-
-        .sidebar-item {
-            padding: 0.75rem 1rem;
-            color: rgba(255, 255, 255, 0.8);
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-        }
-
-        .sidebar-item:hover,
-        .sidebar-item.active {
-            color: white;
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .sidebar-item i {
-            margin-right: 0.75rem;
-            width: 1.25rem;
-        }
-
-        .navbar-top {
-            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
-            background-color: white;
-            padding: 0.75rem 1rem;
-        }
-
-        .content-wrapper {
-            margin-left: 14rem;
-            padding: 1.5rem;
-        }
-
-        .card {
-            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
-            border: none;
-            border-radius: 0.35rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .card-header {
-            background-color: #f8f9fc;
-            border-bottom: 1px solid #e3e6f0;
-            padding: 0.75rem 1.25rem;
-        }
-
-        .border-left-primary {
-            border-left: 0.25rem solid var(--primary) !important;
-        }
-
-        .border-left-success {
-            border-left: 0.25rem solid var(--success) !important;
-        }
-
-        .border-left-info {
-            border-left: 0.25rem solid var(--info) !important;
-        }
-
-        .border-left-warning {
-            border-left: 0.25rem solid var(--warning) !important;
-        }
-
-        .border-left-danger {
-            border-left: 0.25rem solid var(--danger) !important;
-        }
-
-        .text-primary {
-            color: var(--primary) !important;
-        }
-
-        .text-success {
-            color: var(--success) !important;
-        }
-
-        .text-info {
-            color: var(--info) !important;
-        }
-
-        .bg-primary {
-            background-color: var(--primary) !important;
-        }
-
-        .bg-success {
-            background-color: var(--success) !important;
-        }
-
-        .bg-info {
-            background-color: var(--info) !important;
-        }
-
-        .btn-primary {
-            background-color: var(--primary);
-            border-color: var(--primary);
-        }
-
-        .btn-success {
-            background-color: var(--success);
-            border-color: var(--success);
-        }
-
-        .btn-info {
-            background-color: var(--info);
-            border-color: var(--info);
-        }
-
-        /* Mobile responsive adjustments */
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                position: relative;
-                min-height: auto;
-            }
-
-            .content-wrapper {
-                margin-left: 0;
-            }
-        }
+        [x-cloak] { display: none !important; }
     </style>
-    {% block extra_head %}{% endblock %}
 </head>
+<body class="bg-gray-50 font-sans text-gray-900 min-h-screen" x-data="{ mobileOpen: false }">
 
-<body>
-    <div class="d-flex">
-        {% if current_user.is_authenticated %}
-        <!-- Sidebar -->
-        <div class="sidebar position-fixed" style="width: 14rem;">
-            <div class="sidebar-brand">
-                <span>Aqua Force CRM</span>
-            </div>
-            <div class="sidebar-menu">
-                <a href="{{ url_for('main.dashboard') }}"
-                    class="sidebar-item {% if request.endpoint == 'main.dashboard' %}active{% endif %}">
-                    <i class="fas fa-tachometer-alt"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="{{ url_for('clients.index') }}"
-                    class="sidebar-item {% if request.endpoint.startswith('clients.') %}active{% endif %}">
-                    <i class="fas fa-users"></i>
-                    <span>Clients</span>
-                </a>
-                <a href="{{ url_for('quotes.index') }}"
-                    class="sidebar-item {% if request.endpoint.startswith('quotes.') %}active{% endif %}">
-                    <i class="fas fa-file-alt"></i>
-                    <span>Quotes</span>
-                </a>
-                <a href="{{ url_for('invoices.index') }}"
-                    class="sidebar-item {% if request.endpoint.startswith('invoices.') %}active{% endif %}">
-                    <i class="fas fa-file-invoice-dollar"></i>
-                    <span>Invoices</span>
-                </a>
-                <a href="{{ url_for('auth.logout') }}" class="sidebar-item mt-4">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Logout</span>
-                </a>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Main Content -->
-        <div class="w-100 {% if current_user.is_authenticated %}content-wrapper{% endif %}">
-            <!-- Top Navbar -->
-            <nav class="navbar-top d-flex justify-content-between mb-4">
-                <div class="d-flex align-items-center">
-                    <h4 class="mb-0 text-gray-800">{% block header %}Aqua Force CRM{% endblock %}</h4>
+{% if current_user.is_authenticated %}
+<nav class="bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-14">
+            <div class="flex items-center gap-8">
+                <a href="{{ url_for('dashboard') }}" class="text-lg font-semibold text-gray-900 tracking-tight">AutoCRM</a>
+                <div class="hidden sm:flex items-center gap-1">
+                    <a href="{{ url_for('dashboard') }}" class="px-3 py-1.5 text-sm font-medium rounded-md {% if request.endpoint == 'dashboard' %}bg-gray-100 text-gray-900{% else %}text-gray-600 hover:text-gray-900{% endif %}">Dashboard</a>
+                    <a href="{{ url_for('clients.index') }}" class="px-3 py-1.5 text-sm font-medium rounded-md {% if request.endpoint and request.endpoint.startswith('clients.') %}bg-gray-100 text-gray-900{% else %}text-gray-600 hover:text-gray-900{% endif %}">Clients</a>
+                    <a href="{{ url_for('invoices.index') }}" class="px-3 py-1.5 text-sm font-medium rounded-md {% if request.endpoint and request.endpoint.startswith('invoices.') %}bg-gray-100 text-gray-900{% else %}text-gray-600 hover:text-gray-900{% endif %}">Invoices</a>
+                    <a href="{{ url_for('payments.index') }}" class="px-3 py-1.5 text-sm font-medium rounded-md {% if request.endpoint and request.endpoint.startswith('payments.') %}bg-gray-100 text-gray-900{% else %}text-gray-600 hover:text-gray-900{% endif %}">Payments</a>
                 </div>
-                <div class="d-flex align-items-center">
-                    {% if current_user.is_authenticated %}
-                    <span class="me-2">{{ current_user.username }}</span>
-                    <span class="badge bg-primary">Admin</span>
-                    {% endif %}
-                </div>
-            </nav>
-
-            <!-- Flash Messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-            {% for category, message in messages %}
-            <div class="alert {% if category == 'error' %}alert-danger{% else %}alert-success{% endif %} alert-dismissible fade show"
-                role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
-            {% endfor %}
-            {% endif %}
-            {% endwith %}
-
-            <!-- Main Content -->
-            <div class="container-fluid">
-                {% block content %}{% endblock %}
+            <div class="flex items-center gap-4">
+                <span class="hidden sm:inline text-sm text-gray-500">{{ current_user.username }}</span>
+                <a href="{{ url_for('auth.logout') }}" class="text-sm text-gray-500 hover:text-gray-700">Sign out</a>
+                <button @click="mobileOpen = !mobileOpen" class="sm:hidden p-1 text-gray-500">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path x-show="!mobileOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"/>
+                        <path x-show="mobileOpen" x-cloak stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
             </div>
         </div>
     </div>
+    <!-- Mobile menu -->
+    <div x-show="mobileOpen" x-cloak class="sm:hidden border-t border-gray-200 bg-white px-4 py-2 space-y-1">
+        <a href="{{ url_for('dashboard') }}" class="block px-3 py-2 text-sm font-medium rounded-md text-gray-700">Dashboard</a>
+        <a href="{{ url_for('clients.index') }}" class="block px-3 py-2 text-sm font-medium rounded-md text-gray-700">Clients</a>
+        <a href="{{ url_for('invoices.index') }}" class="block px-3 py-2 text-sm font-medium rounded-md text-gray-700">Invoices</a>
+        <a href="{{ url_for('payments.index') }}" class="block px-3 py-2 text-sm font-medium rounded-md text-gray-700">Payments</a>
+    </div>
+</nav>
+{% endif %}
 
-    <!-- Bootstrap JS Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Custom scripts -->
-    {% block scripts %}{% endblock %}
+<!-- Toast notifications -->
+<div class="fixed top-4 right-4 z-50 space-y-2" x-data="{ toasts: [] }" x-init="
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    toasts.push({ id: {{ loop.index }}, message: '{{ message|e }}', type: '{{ category }}' });
+    setTimeout(() => { toasts = toasts.filter(t => t.id !== {{ loop.index }}) }, 4000);
+    {% endfor %}
+    {% endwith %}
+">
+    <template x-for="toast in toasts" :key="toast.id">
+        <div x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 translate-y-1"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="px-4 py-3 rounded-lg shadow-sm border text-sm max-w-sm"
+             :class="{
+                 'bg-green-50 border-green-200 text-green-800': toast.type === 'success',
+                 'bg-red-50 border-red-200 text-red-800': toast.type === 'error',
+                 'bg-blue-50 border-blue-200 text-blue-800': toast.type !== 'success' && toast.type !== 'error'
+             }"
+             x-text="toast.message"
+             @click="toasts = toasts.filter(t => t.id !== toast.id)">
+        </div>
+    </template>
+</div>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    {% block content %}{% endblock %}
+</main>
+
 </body>
-
 </html>
