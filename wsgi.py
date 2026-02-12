@@ -1,5 +1,5 @@
 from app import create_app, db
-from app.models import User, Client, Invoice, InvoiceItem, Payment
+from app.models import User, Client, Invoice, InvoiceItem, Payment, PasswordResetToken, InviteCode
 
 app = create_app()
 
@@ -13,6 +13,8 @@ def make_shell_context():
         'Invoice': Invoice,
         'InvoiceItem': InvoiceItem,
         'Payment': Payment,
+        'PasswordResetToken': PasswordResetToken,
+        'InviteCode': InviteCode,
     }
 
 

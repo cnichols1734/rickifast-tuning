@@ -1,8 +1,9 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required
 from datetime import date, datetime, timezone
 from app import db
 from app.models import Client, Invoice, InvoiceItem, Payment
+from app.email_utils import send_invoice_email
 
 invoices = Blueprint('invoices', __name__, url_prefix='/invoices')
 
@@ -235,4 +236,28 @@ def record_payment(id):
 
     db.session.commit()
     flash(f'Payment of ${amount:,.2f} recorded.', 'success')
+    return redirect(url_for('invoices.view', id=invoice.id))
+
+
+@invoices.route('/<int:id>/email', methods=['POST'])
+@login_required
+def email_invoice(id):
+    invoice = db.get_or_404(Invoice, id)
+
+    recipients = request.form.get('recipients', '').strip()
+    if not recipients:
+        flash('Please enter at least one email address.', 'error')
+        return redirect(url_for('invoices.view', id=invoice.id))
+
+    success = send_invoice_email(invoice, recipients, include_pdf=True)
+
+    if success:
+        # Mark invoice as sent if still draft
+        if invoice.status == 'draft':
+            invoice.status = 'sent'
+            db.session.commit()
+        flash(f'Invoice emailed to {recipients}.', 'success')
+    else:
+        flash('Failed to send invoice email. Please try again.', 'error')
+
     return redirect(url_for('invoices.view', id=invoice.id))

@@ -1,4 +1,5 @@
 from datetime import datetime, date, timezone
+import secrets
 from app import db, login_manager
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -14,6 +15,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(64), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256))
+    is_admin = db.Column(db.Boolean, default=False)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -23,6 +25,57 @@ class User(UserMixin, db.Model):
 
     def __repr__(self):
         return f'<User {self.username}>'
+
+
+class PasswordResetToken(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    token = db.Column(db.String(128), unique=True, nullable=False, index=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    expires_at = db.Column(db.DateTime, nullable=False)
+    used = db.Column(db.Boolean, default=False)
+
+    user = db.relationship('User', backref='reset_tokens')
+
+    @staticmethod
+    def generate(user, hours=1):
+        from datetime import timedelta
+        token = secrets.token_urlsafe(48)
+        expires = datetime.now(timezone.utc) + timedelta(hours=hours)
+        prt = PasswordResetToken(user_id=user.id, token=token, expires_at=expires)
+        db.session.add(prt)
+        db.session.commit()
+        return prt
+
+    @property
+    def is_valid(self):
+        return not self.used and datetime.now(timezone.utc) < self.expires_at
+
+
+class InviteCode(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), nullable=False)
+    code = db.Column(db.String(128), unique=True, nullable=False, index=True)
+    invited_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    expires_at = db.Column(db.DateTime, nullable=False)
+    used = db.Column(db.Boolean, default=False)
+
+    invited_by = db.relationship('User', backref='sent_invites')
+
+    @staticmethod
+    def generate(email, invited_by_user, hours=48):
+        from datetime import timedelta
+        code = secrets.token_urlsafe(48)
+        expires = datetime.now(timezone.utc) + timedelta(hours=hours)
+        invite = InviteCode(email=email, code=code, invited_by_id=invited_by_user.id, expires_at=expires)
+        db.session.add(invite)
+        db.session.commit()
+        return invite
+
+    @property
+    def is_valid(self):
+        return not self.used and datetime.now(timezone.utc) < self.expires_at
 
 
 class Client(db.Model):
