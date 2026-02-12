@@ -81,19 +81,19 @@ class InviteCode(db.Model):
 class Client(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String(100), nullable=False)
-    last_name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(120))
+    last_name = db.Column(db.String(100), nullable=False, index=True)
+    email = db.Column(db.String(120), index=True)
     phone = db.Column(db.String(20))
     vehicle_year = db.Column(db.String(4))
     vehicle_make = db.Column(db.String(50))
     vehicle_model = db.Column(db.String(50))
     vehicle_trim = db.Column(db.String(50))
     notes = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), index=True)
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc),
                            onupdate=lambda: datetime.now(timezone.utc))
 
-    invoices = db.relationship('Invoice', backref='client', lazy='dynamic',
+    invoices = db.relationship('Invoice', backref='client', lazy='selectin',
                                cascade='all, delete-orphan')
 
     @property
@@ -112,20 +112,20 @@ class Client(db.Model):
 
 class Invoice(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False, index=True)
     invoice_number = db.Column(db.String(20), unique=True, nullable=False)
-    status = db.Column(db.String(20), default='draft')  # draft or sent
+    status = db.Column(db.String(20), default='draft', index=True)  # draft or sent
     due_date = db.Column(db.Date)
     notes = db.Column(db.Text)
     tax_rate = db.Column(db.Float, default=0.0825)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), index=True)
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc),
                            onupdate=lambda: datetime.now(timezone.utc))
 
     items = db.relationship('InvoiceItem', backref='invoice',
-                            cascade='all, delete-orphan', lazy='dynamic')
+                            cascade='all, delete-orphan', lazy='selectin')
     payments = db.relationship('Payment', backref='invoice',
-                               cascade='all, delete-orphan', lazy='dynamic',
+                               cascade='all, delete-orphan', lazy='selectin',
                                order_by='Payment.payment_date.desc()')
 
     @staticmethod
@@ -173,7 +173,7 @@ class Invoice(db.Model):
 
 class InvoiceItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    invoice_id = db.Column(db.Integer, db.ForeignKey('invoice.id'), nullable=False)
+    invoice_id = db.Column(db.Integer, db.ForeignKey('invoice.id'), nullable=False, index=True)
     description = db.Column(db.String(200), nullable=False)
     quantity = db.Column(db.Float, default=1)
     unit_price = db.Column(db.Float, nullable=False)
@@ -189,12 +189,12 @@ class InvoiceItem(db.Model):
 
 class Payment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    invoice_id = db.Column(db.Integer, db.ForeignKey('invoice.id'), nullable=False)
+    invoice_id = db.Column(db.Integer, db.ForeignKey('invoice.id'), nullable=False, index=True)
     amount = db.Column(db.Float, nullable=False)
-    payment_date = db.Column(db.Date, default=lambda: date.today())
-    method = db.Column(db.String(20), default='cash')  # cash/check/zelle/venmo/card/other
+    payment_date = db.Column(db.Date, default=lambda: date.today(), index=True)
+    method = db.Column(db.String(20), default='cash', index=True)  # cash/check/zelle/venmo/card/other
     reference_note = db.Column(db.String(200))
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), index=True)
 
     def __repr__(self):
         return f'<Payment ${self.amount} on Invoice {self.invoice_id}>'

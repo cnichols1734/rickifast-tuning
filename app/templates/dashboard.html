@@ -21,15 +21,15 @@
     </div>
     <div class="bg-white rounded-lg border border-slate-200 p-6">
         <p class="text-sm font-medium text-slate-500">Outstanding ({{ outstanding_count }})</p>
-        <p class="text-3xl font-bold text-slate-900 mt-2">${{ '{:,.0f}'.format(outstanding_total) }}</p>
+        <p class="text-3xl font-bold text-slate-900 mt-2">${{ '{:,.2f}'.format(outstanding_total) }}</p>
     </div>
     <div class="bg-white rounded-lg border border-slate-200 p-6">
         <p class="text-sm font-medium text-slate-500">This Month</p>
-        <p class="text-3xl font-bold text-slate-900 mt-2">${{ '{:,.0f}'.format(monthly_revenue) }}</p>
+        <p class="text-3xl font-bold text-slate-900 mt-2">${{ '{:,.2f}'.format(monthly_revenue) }}</p>
     </div>
     <div class="bg-white rounded-lg border border-slate-200 p-6">
         <p class="text-sm font-medium text-slate-500">All-Time Revenue</p>
-        <p class="text-3xl font-bold text-slate-900 mt-2">${{ '{:,.0f}'.format(all_time_revenue) }}</p>
+        <p class="text-3xl font-bold text-slate-900 mt-2">${{ '{:,.2f}'.format(all_time_revenue) }}</p>
     </div>
 </div>
 
