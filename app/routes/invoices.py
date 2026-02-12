@@ -12,18 +12,25 @@ invoices = Blueprint('invoices', __name__, url_prefix='/invoices')
 @login_required
 def index():
     status_filter = request.args.get('status', 'all')
-    all_invoices = Invoice.query.order_by(Invoice.created_at.desc()).all()
+
+    # Single query — items & payments already eager-loaded via selectin
+    all_invoices = Invoice.query.options(
+        db.joinedload(Invoice.client)
+    ).order_by(Invoice.created_at.desc()).all()
+
+    # Compute each invoice's status once
+    invoice_with_status = [(inv, inv.get_status()) for inv in all_invoices]
+
+    counts = {'all': len(all_invoices)}
+    for s in ['draft', 'sent', 'partial', 'paid', 'overdue']:
+        counts[s] = sum(1 for _, st in invoice_with_status if st == s)
 
     if status_filter != 'all':
-        all_invoices = [inv for inv in all_invoices if inv.get_status() == status_filter]
+        filtered = [inv for inv, st in invoice_with_status if st == status_filter]
+    else:
+        filtered = all_invoices
 
-    counts = {}
-    every = Invoice.query.all()
-    for s in ['draft', 'sent', 'partial', 'paid', 'overdue']:
-        counts[s] = sum(1 for inv in every if inv.get_status() == s)
-    counts['all'] = len(every)
-
-    return render_template('invoices/index.html', invoices=all_invoices,
+    return render_template('invoices/index.html', invoices=filtered,
                            status_filter=status_filter, counts=counts)
 
 
@@ -97,7 +104,9 @@ def create():
 @invoices.route('/<int:id>')
 @login_required
 def view(id):
-    invoice = db.get_or_404(Invoice, id)
+    invoice = Invoice.query.options(
+        db.joinedload(Invoice.client)
+    ).get_or_404(id)
     return render_template('invoices/view.html', invoice=invoice, today=date.today().isoformat())
 
 

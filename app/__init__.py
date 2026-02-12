@@ -49,25 +49,31 @@ def create_app():
 
         total_clients = Client.query.count()
 
-        all_invoices = Invoice.query.all()
+        # Load all invoices once (items & payments eager-loaded via selectin)
+        all_invoices = Invoice.query.options(
+            db.joinedload(Invoice.client)
+        ).all()
         outstanding = [inv for inv in all_invoices if inv.get_status() in ('sent', 'partial', 'overdue')]
         outstanding_total = sum(inv.calculate_balance() for inv in outstanding)
         outstanding_count = len(outstanding)
 
         now = datetime.now(timezone.utc)
         first_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        monthly_payments = Payment.query.filter(
-            Payment.payment_date >= first_of_month.date()
-        ).all()
-        monthly_revenue = sum(p.amount for p in monthly_payments)
+        monthly_revenue = db.session.query(
+            func.coalesce(func.sum(Payment.amount), 0)
+        ).filter(Payment.payment_date >= first_of_month.date()).scalar()
 
         all_time_revenue = db.session.query(
             func.coalesce(func.sum(Payment.amount), 0)
         ).scalar()
 
-        recent_invoices = Invoice.query.order_by(Invoice.created_at.desc()).limit(5).all()
+        recent_invoices = Invoice.query.options(
+            db.joinedload(Invoice.client)
+        ).order_by(Invoice.created_at.desc()).limit(5).all()
         recent_clients = Client.query.order_by(Client.created_at.desc()).limit(5).all()
-        recent_payments = Payment.query.order_by(Payment.created_at.desc()).limit(5).all()
+        recent_payments = Payment.query.options(
+            db.joinedload(Payment.invoice)
+        ).order_by(Payment.created_at.desc()).limit(5).all()
 
         return render_template('dashboard.html',
                                total_clients=total_clients,

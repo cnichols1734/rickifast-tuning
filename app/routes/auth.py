@@ -18,7 +18,7 @@ def login():
         password = request.form.get('password', '')
         remember = request.form.get('remember_me') == 'on'
 
-        user = User.query.filter_by(username=username).first()
+        user = User.query.filter(db.func.lower(User.username) == username.lower()).first()
         if user is None or not user.check_password(password):
             flash('Invalid username or password.', 'error')
             return redirect(url_for('auth.login'))

@@ -1,9 +1,39 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required
 from app import db
-from app.models import Client
+from app.models import Client, Invoice
 
 clients = Blueprint('clients', __name__, url_prefix='/clients')
+
+
+@clients.route('/search')
+@login_required
+def search_api():
+    """JSON API for live client search."""
+    q = request.args.get('q', '').strip()
+    if len(q) < 2:
+        return jsonify([])
+
+    search = f'%{q}%'
+    results = Client.query.filter(
+        db.or_(
+            Client.first_name.ilike(search),
+            Client.last_name.ilike(search),
+            Client.email.ilike(search),
+            Client.phone.ilike(search),
+            Client.vehicle_make.ilike(search),
+            Client.vehicle_model.ilike(search),
+        )
+    ).order_by(Client.last_name.asc()).limit(20).all()
+
+    return jsonify([{
+        'id': c.id,
+        'full_name': c.full_name,
+        'vehicle': c.vehicle_display,
+        'phone': c.phone or '',
+        'email': c.email or '',
+        'url': url_for('clients.view', id=c.id),
+    } for c in results])
 
 
 @clients.route('/')
@@ -61,7 +91,9 @@ def create():
 @login_required
 def view(id):
     client = db.get_or_404(Client, id)
-    invoices = client.invoices.order_by(db.desc('created_at')).all()
+    # Explicit query with eager-loaded items/payments (via selectin default)
+    invoices = Invoice.query.filter_by(client_id=client.id) \
+        .order_by(Invoice.created_at.desc()).all()
     total_spent = sum(inv.calculate_paid() for inv in invoices)
     return render_template('clients/view.html', client=client,
                            invoices=invoices, total_spent=total_spent)
