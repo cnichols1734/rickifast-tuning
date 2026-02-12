@@ -1,75 +1,93 @@
-# Aqua Force CRM
+# Rickifast Tuning CRM
 
-A simple client management, invoice, and quote web application for Aqua Force Pressure Washing company.
+A professional client management and invoicing application for Rickifast Tuning LLC - a performance automotive tuning business.
 
 ## Features
 
-- Client management
-- Quote creation and management
-- Invoice creation and management
-- Convert quotes to invoices
-- Email quotes and invoices to clients
-- Dashboard with key metrics
-
-## Tech Stack
-
-- Backend: Flask
-- Frontend: HTML, Tailwind CSS, Alpine.js
-- Database: SQLite
-- Hosting: PythonAnywhere
-
-## Setup
-
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/cnichols1734/pressure_washing_crm
-   cd pressure_washing_crm
-   ```
-
-2. **Create and activate a virtual environment**:
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Initialize the database** (if starting fresh):
-   ```bash
-   python init_db.py
-   ```
-   *Note: This repository includes a pre-initialized `aquaforce.db` with sample data.*
-
-5. **Run the application**:
-   ```bash
-   python run.py
-   ```
-
-## Admin Credentials
-
-To log in for the first time, use the following credentials:
-- **Username**: `admin`
-- **Password**: `adminpassword`
+- **Client Management**: Track customer contact info and vehicle details
+- **Invoice Creation**: Generate professional invoices with line items and tax calculation
+- **Payment Tracking**: Record and track payments against invoices
+- **Dashboard**: Overview of revenue, outstanding balances, and recent activity
+- **Modern UI**: Clean, professional design optimized for automotive business
 
 ## Tech Stack
 
 - **Backend**: Flask (Python)
-- **Frontend**: Tailwind CSS & Bootstrap
-- **Database**: SQLite
+- **Frontend**: Tailwind CSS, Alpine.js
+- **Database**: Supabase (PostgreSQL)
+- **Hosting**: Railway (production-ready)
 
-## Features
+## Setup
 
-- **Client Management**: Track customer details and history.
-- **Quote System**: Create professional quotes and send them via email.
-- **Invoicing**: Generate invoices and track payment status.
-- **Dashboard**: High-level overview of business metrics.
+### 1. Clone the repository
+```bash
+git clone https://github.com/cnichols1734/rickifast-tuning
+cd rickifast-tuning
+```
 
-## Deployment
+### 2. Create and activate a virtual environment
+```bash
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
 
-This app is ready to be deployed to **PythonAnywhere** or any other WSGI-compliant hosting provider. Remember to set your `SECRET_KEY` in the environment variables.
+### 3. Install dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Set up environment variables
+Copy `.env.example` to `.env` and fill in your Supabase credentials:
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your Supabase details:
+- `DATABASE_URL`: Your Supabase PostgreSQL connection string
+- `SUPABASE_URL`: Your Supabase project URL
+- `SUPABASE_ANON_KEY`: Your Supabase anon key
+- `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase service role key
+
+### 5. Initialize the database
+```bash
+python migrate_to_supabase.py
+```
+
+### 6. Create an admin user
+```bash
+python create_admin.py
+```
+
+### 7. Run the application
+```bash
+python app.py
+```
+
+The app will be available at `http://localhost:5007`
+
+## Production Deployment (Railway)
+
+1. **Connect your GitHub repository** to Railway
+2. **Set environment variables** in Railway dashboard:
+   - `DATABASE_URL`
+   - `SUPABASE_URL`
+   - `SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `SECRET_KEY` (generate a secure random key)
+   - `TAX_RATE` (e.g., 0.0825 for 8.25%)
+
+3. **Deploy**: Railway will automatically deploy when you push to GitHub
+
+## Database
+
+This application uses **Supabase** (PostgreSQL) for both development and production, ensuring consistency across environments. The same database is used for dev and prod.
+
+### Tables
+- `user` - Application users
+- `client` - Customer records with vehicle information
+- `invoice` - Invoices with status tracking
+- `invoice_item` - Line items for each invoice
+- `payment` - Payment records linked to invoices
 
 ## License
 

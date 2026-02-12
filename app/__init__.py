@@ -79,7 +79,9 @@ def create_app():
                                recent_clients=recent_clients,
                                recent_payments=recent_payments)
 
-    with app.app_context():
-        db.create_all()
+    # Only create tables if they don't exist (for development)
+    # In production, use migrations instead
+    # with app.app_context():
+    #     db.create_all()
 
     return app

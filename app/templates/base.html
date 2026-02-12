@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}AutoCRM{% endblock %}</title>
+    <title>{% block title %}Rickifast Tuning LLC{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,28 +13,36 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+                    boxShadow: {
+                        'xs': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+                    }
                 }
             }
         }
     </script>
     <style>
         [x-cloak] { display: none !important; }
+        /* High contrast focus rings for better accessibility/feel */
+        *:focus-visible {
+            outline: 2px solid #0f172a;
+            outline-offset: 2px;
+        }
     </style>
 </head>
-<body class="bg-gray-50 font-sans text-gray-900 min-h-screen" x-data="{ mobileOpen: false }">
+<body class="bg-white font-sans text-slate-900 min-h-screen" x-data="{ mobileOpen: false }">
 
 {% if current_user.is_authenticated %}
-<nav class="bg-white border-b border-gray-200">
+<nav class="border-b border-slate-200 bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-14">
+        <div class="flex justify-between h-16">
             <div class="flex items-center gap-8">
-                <a href="{{ url_for('dashboard') }}" class="text-lg font-semibold text-gray-900 tracking-tight">AutoCRM</a>
-                <div class="hidden sm:flex items-center gap-1">
-                    <a href="{{ url_for('dashboard') }}" class="px-3 py-1.5 text-sm font-medium rounded-md {% if request.endpoint == 'dashboard' %}bg-gray-100 text-gray-900{% else %}text-gray-600 hover:text-gray-900{% endif %}">Dashboard</a>
-                    <a href="{{ url_for('clients.index') }}" class="px-3 py-1.5 text-sm font-medium rounded-md {% if request.endpoint and request.endpoint.startswith('clients.') %}bg-gray-100 text-gray-900{% else %}text-gray-600 hover:text-gray-900{% endif %}">Clients</a>
-                    <a href="{{ url_for('invoices.index') }}" class="px-3 py-1.5 text-sm font-medium rounded-md {% if request.endpoint and request.endpoint.startswith('invoices.') %}bg-gray-100 text-gray-900{% else %}text-gray-600 hover:text-gray-900{% endif %}">Invoices</a>
-                    <a href="{{ url_for('payments.index') }}" class="px-3 py-1.5 text-sm font-medium rounded-md {% if request.endpoint and request.endpoint.startswith('payments.') %}bg-gray-100 text-gray-900{% else %}text-gray-600 hover:text-gray-900{% endif %}">Payments</a>
+                <a href="{{ url_for('dashboard') }}" class="text-xl font-bold text-slate-900 tracking-tight">Rickifast Tuning LLC</a>
+                <div class="hidden sm:flex items-center space-x-1">
+                    <a href="{{ url_for('dashboard') }}" class="px-3 py-2 text-sm font-medium rounded-md transition-colors {% if request.endpoint == 'dashboard' %}bg-slate-100 text-slate-900{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-50{% endif %}">Dashboard</a>
+                    <a href="{{ url_for('clients.index') }}" class="px-3 py-2 text-sm font-medium rounded-md transition-colors {% if request.endpoint and request.endpoint.startswith('clients.') %}bg-slate-100 text-slate-900{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-50{% endif %}">Clients</a>
+                    <a href="{{ url_for('invoices.index') }}" class="px-3 py-2 text-sm font-medium rounded-md transition-colors {% if request.endpoint and request.endpoint.startswith('invoices.') %}bg-slate-100 text-slate-900{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-50{% endif %}">Invoices</a>
+                    <a href="{{ url_for('payments.index') }}" class="px-3 py-2 text-sm font-medium rounded-md transition-colors {% if request.endpoint and request.endpoint.startswith('payments.') %}bg-slate-100 text-slate-900{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-50{% endif %}">Payments</a>
                 </div>
             </div>
             <div class="flex items-center gap-4">
