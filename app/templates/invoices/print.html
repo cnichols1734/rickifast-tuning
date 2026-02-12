@@ -37,8 +37,17 @@
 <body>
     <div class="header">
         <div>
-            <h1>{{ invoice.invoice_number }}</h1>
-            <p style="color: #666; margin-top: 4px;">AutoCRM</p>
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" style="width: 44px; height: 44px;">
+                    <rect x="0" y="0" width="48" height="48" rx="10" fill="#0f172a"/>
+                    <path d="M27 8L14 27h9l-3 13L33 21H24l3-13z" fill="#facc15"/>
+                </svg>
+                <div>
+                    <div style="font-size: 20px; font-weight: 800; letter-spacing: -0.02em; color: #0f172a;">RICKIFAST</div>
+                    <div style="font-size: 10px; font-weight: 600; letter-spacing: 0.25em; color: #94a3b8; margin-top: -2px;">TUNING LLC</div>
+                </div>
+            </div>
+            <h1 style="margin-top: 12px;">{{ invoice.invoice_number }}</h1>
         </div>
         <div class="meta">
             <p>Created: {{ invoice.created_at.strftime('%B %d, %Y') }}</p>

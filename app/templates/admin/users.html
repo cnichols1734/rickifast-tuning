@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}User Management — Rickifast Tuning LLC{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
+    <div>
+        <h1 class="text-2xl font-bold text-slate-900">User Management</h1>
+        <p class="text-sm text-slate-500 mt-1">Manage team members and send invitations.</p>
+    </div>
+    <a href="{{ url_for('dashboard') }}" class="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 text-sm font-medium rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors shadow-xs">Back to Dashboard</a>
+</div>
+
+<!-- Invite New User -->
+<div class="bg-white rounded-lg border border-slate-200 p-6 mb-8">
+    <h2 class="text-lg font-semibold text-slate-900 mb-4">Invite New User</h2>
+    <form method="POST" action="{{ url_for('auth.admin_invite') }}" class="flex flex-col sm:flex-row gap-3">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="email" name="email" required placeholder="Email address"
+               class="flex-1 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-shadow">
+        <button type="submit" class="px-6 py-2 bg-slate-900 text-white text-sm font-bold rounded-md hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 transition-colors whitespace-nowrap">Send Invite</button>
+    </form>
+</div>
+
+<!-- Current Users -->
+<div class="bg-white rounded-lg border border-slate-200 overflow-hidden mb-8">
+    <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+        <h2 class="text-sm font-semibold text-slate-900 uppercase tracking-wider">Users ({{ users|length }})</h2>
+    </div>
+    <div class="divide-y divide-slate-100">
+        {% for user in users %}
+        <div class="px-6 py-4 flex items-center justify-between">
+            <div>
+                <p class="text-sm font-semibold text-slate-900">
+                    {{ user.username }}
+                    {% if user.is_admin %}
+                    <span class="ml-2 inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">Admin</span>
+                    {% endif %}
+                    {% if user.id == current_user.id %}
+                    <span class="ml-1 text-xs text-slate-400">(you)</span>
+                    {% endif %}
+                </p>
+                <p class="text-sm text-slate-500 mt-0.5">{{ user.email }}</p>
+            </div>
+            {% if user.id != current_user.id %}
+            <div class="flex items-center gap-2">
+                <form method="POST" action="{{ url_for('auth.toggle_admin', user_id=user.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="px-3 py-1.5 text-xs font-medium rounded-md border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 transition-colors">
+                        {{ 'Remove Admin' if user.is_admin else 'Make Admin' }}
+                    </button>
+                </form>
+                <form method="POST" action="{{ url_for('auth.delete_user', user_id=user.id) }}" onsubmit="return confirm('Delete user {{ user.username }}? This cannot be undone.')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="px-3 py-1.5 text-xs font-medium rounded-md border border-red-200 bg-white text-red-600 hover:bg-red-50 transition-colors">Delete</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Pending Invites -->
+{% if pending_invites %}
+<div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+    <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+        <h2 class="text-sm font-semibold text-slate-900 uppercase tracking-wider">Pending Invites ({{ pending_invites|length }})</h2>
+    </div>
+    <div class="divide-y divide-slate-100">
+        {% for invite in pending_invites %}
+        <div class="px-6 py-4 flex items-center justify-between">
+            <div>
+                <p class="text-sm font-semibold text-slate-900">{{ invite.email }}</p>
+                <p class="text-xs text-slate-400 mt-0.5">
+                    Sent {{ invite.created_at.strftime('%b %d, %Y') }} · 
+                    {% if invite.is_valid %}
+                    <span class="text-emerald-600">Active</span>
+                    {% else %}
+                    <span class="text-red-500">Expired</span>
+                    {% endif %}
+                </p>
+            </div>
+            {% if invite.is_valid %}
+            <form method="POST" action="{{ url_for('auth.revoke_invite', invite_id=invite.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="px-3 py-1.5 text-xs font-medium rounded-md border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 transition-colors">Revoke</button>
+            </form>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

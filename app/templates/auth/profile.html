@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Profile — Rickifast Tuning LLC{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto">
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-slate-900">Profile</h1>
+        <p class="text-sm text-slate-500 mt-1">Update your account details.</p>
+    </div>
+
+    <form method="POST" class="space-y-8">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- Account Info -->
+        <div class="bg-white rounded-lg border border-slate-200 p-6">
+            <h2 class="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-5">Account Information</h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-slate-700 mb-1.5">Username</label>
+                    <input type="text" name="username" id="username" required value="{{ current_user.username }}"
+                           class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-shadow">
+                </div>
+                <div>
+                    <label for="email" class="block text-sm font-medium text-slate-700 mb-1.5">Email address</label>
+                    <input type="email" name="email" id="email" required value="{{ current_user.email }}"
+                           class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-shadow">
+                    <p class="text-xs text-slate-400 mt-1">This is where password reset emails will be sent.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Change Password (optional) -->
+        <div class="bg-white rounded-lg border border-slate-200 p-6">
+            <h2 class="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-1">Change Password</h2>
+            <p class="text-xs text-slate-400 mb-5">Leave blank to keep your current password.</p>
+            <div class="space-y-4">
+                <div>
+                    <label for="current_password" class="block text-sm font-medium text-slate-700 mb-1.5">Current Password</label>
+                    <input type="password" name="current_password" id="current_password"
+                           class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-shadow">
+                </div>
+                <div>
+                    <label for="new_password" class="block text-sm font-medium text-slate-700 mb-1.5">New Password</label>
+                    <input type="password" name="new_password" id="new_password" minlength="6"
+                           class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-shadow">
+                </div>
+                <div>
+                    <label for="confirm_password" class="block text-sm font-medium text-slate-700 mb-1.5">Confirm New Password</label>
+                    <input type="password" name="confirm_password" id="confirm_password"
+                           class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-shadow">
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-between">
+            <a href="{{ url_for('dashboard') }}" class="text-sm text-slate-500 hover:text-slate-700 font-medium">Cancel</a>
+            <button type="submit" class="px-6 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-md hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 transition-colors">Save Changes</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

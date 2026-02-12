@@ -37,16 +37,22 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex items-center gap-8">
-                <a href="{{ url_for('dashboard') }}" class="text-xl font-bold text-slate-900 tracking-tight">Rickifast Tuning LLC</a>
+                {% from 'components/logo.html' import nav_logo %}
+                <a href="{{ url_for('dashboard') }}" class="flex items-center">
+                    {{ nav_logo() }}
+                </a>
                 <div class="hidden sm:flex items-center space-x-1">
                     <a href="{{ url_for('dashboard') }}" class="px-3 py-2 text-sm font-medium rounded-md transition-colors {% if request.endpoint == 'dashboard' %}bg-slate-100 text-slate-900{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-50{% endif %}">Dashboard</a>
                     <a href="{{ url_for('clients.index') }}" class="px-3 py-2 text-sm font-medium rounded-md transition-colors {% if request.endpoint and request.endpoint.startswith('clients.') %}bg-slate-100 text-slate-900{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-50{% endif %}">Clients</a>
                     <a href="{{ url_for('invoices.index') }}" class="px-3 py-2 text-sm font-medium rounded-md transition-colors {% if request.endpoint and request.endpoint.startswith('invoices.') %}bg-slate-100 text-slate-900{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-50{% endif %}">Invoices</a>
                     <a href="{{ url_for('payments.index') }}" class="px-3 py-2 text-sm font-medium rounded-md transition-colors {% if request.endpoint and request.endpoint.startswith('payments.') %}bg-slate-100 text-slate-900{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-50{% endif %}">Payments</a>
+                    {% if current_user.is_admin %}
+                    <a href="{{ url_for('auth.admin_users') }}" class="px-3 py-2 text-sm font-medium rounded-md transition-colors {% if request.endpoint and request.endpoint.startswith('auth.admin') %}bg-slate-100 text-slate-900{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-50{% endif %}">Users</a>
+                    {% endif %}
                 </div>
             </div>
             <div class="flex items-center gap-4">
-                <span class="hidden sm:inline text-sm text-gray-500">{{ current_user.username }}</span>
+                <a href="{{ url_for('auth.profile') }}" class="hidden sm:inline text-sm text-gray-500 hover:text-gray-700">{{ current_user.username }}</a>
                 <a href="{{ url_for('auth.logout') }}" class="text-sm text-gray-500 hover:text-gray-700">Sign out</a>
                 <button @click="mobileOpen = !mobileOpen" class="sm:hidden p-1 text-gray-500">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -63,6 +69,9 @@
         <a href="{{ url_for('clients.index') }}" class="block px-3 py-2 text-sm font-medium rounded-md text-gray-700">Clients</a>
         <a href="{{ url_for('invoices.index') }}" class="block px-3 py-2 text-sm font-medium rounded-md text-gray-700">Invoices</a>
         <a href="{{ url_for('payments.index') }}" class="block px-3 py-2 text-sm font-medium rounded-md text-gray-700">Payments</a>
+        {% if current_user.is_admin %}
+        <a href="{{ url_for('auth.admin_users') }}" class="block px-3 py-2 text-sm font-medium rounded-md text-gray-700">Users</a>
+        {% endif %}
     </div>
 </nav>
 {% endif %}
